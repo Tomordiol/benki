@@ -35,10 +35,6 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
                     <h4>{t.contactUs}</h4>
                     <div className={styles.contactInfo}>
                         <div className={styles.contactItem}>
-                            <MapPin size={18} className={styles.icon} />
-                            <span>{t.address}</span>
-                        </div>
-                        <div className={styles.contactItem}>
                             <Phone size={18} className={styles.icon} />
                             <span>{t.phone}</span>
                         </div>
@@ -52,13 +48,11 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
                 <div className={styles.column}>
                     <h4>{t.followUs}</h4>
                     <div className={styles.socialStats}>
-                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className={styles.stat} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <Facebook size={20} />
-                            <span>{facebookFollowers || '0'} Followers</span>
+                        <a href="https://www.facebook.com/p/Benki-tv-tnarasipura-%E0%B2%AC%E0%B3%86%E0%B2%82%E0%B2%95%E0%B2%BF-%E0%B2%9F%E0%B2%BF%E0%B2%B5%E0%B2%BF-%E0%B2%9F%E0%B2%BF%E0%B2%A8%E0%B2%B0%E0%B2%B8%E0%B3%80%E0%B2%AA%E0%B3%81%E0%B2%B0-100063639407615/" target="_blank" rel="noopener noreferrer" className={styles.stat} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Facebook size={24} />
                         </a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className={styles.stat} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <Instagram size={20} />
-                            <span>{instagramFollowers || '0'} Followers</span>
+                        <a href="https://www.instagram.com/benkitv.tnarsipura/?hl=en" target="_blank" rel="noopener noreferrer" className={styles.stat} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Instagram size={24} />
                         </a>
                     </div>
                 </div>

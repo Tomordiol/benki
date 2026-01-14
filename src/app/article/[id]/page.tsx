@@ -5,7 +5,7 @@ import ArticleContent from './ArticleContent';
 
 export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const article = await getArticle(id);
+    const article = await getArticle(id) as any;
 
     if (!article) {
         notFound();

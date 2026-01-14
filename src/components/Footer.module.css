@@ -27,8 +27,8 @@
 
 .socialStats {
     display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+    flex-direction: row;
+    gap: 1rem;
 }
 
 .stat {

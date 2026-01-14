@@ -1,8 +1,9 @@
-
 import { checkAuth, logout } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import '../admin.css'; 
+import '../admin.css';
+
+export const dynamic = 'force-dynamic';
 
 export default async function ProtectedAdminLayout({
   children,
@@ -25,7 +26,7 @@ export default async function ProtectedAdminLayout({
           <Link href="/admin/settings">Settings</Link>
         </nav>
         <form action={logout}>
-           <button className="logout-btn">Logout</button>
+          <button className="logout-btn">Logout</button>
         </form>
       </aside>
       <main className="admin-content">

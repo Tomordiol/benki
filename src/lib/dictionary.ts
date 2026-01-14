@@ -19,9 +19,8 @@ export const dictionary = {
         contactUs: 'Contact Us',
         followUs: 'Follow Us',
         rights: 'All rights reserved.',
-        address: '#123, Gandhi Bazaar, Bangalore - 560004',
-        phone: '+91 98765 43210',
-        email: 'contact@benkitv.com',
+        phone: '+91 9916776322',
+        email: 'benkitvtnarsipura@gmail.com',
         noNews: 'No news yet',
     },
     kn: {
@@ -41,9 +40,8 @@ export const dictionary = {
         contactUs: 'ಸಂಪರ್ಕಿಸಿ',
         followUs: 'ನಮ್ಮನ್ನು ಹಿಂಬಾಲಿಸಿ',
         rights: 'ಎಲ್ಲಾ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ.',
-        address: '#೧೨೩, ಗಾಂಧಿ ಬಜಾರ್, ಬೆಂಗಳೂರು - ೫೬೦೦೦೪',
-        phone: '+೯೧ ೯೮೭೬೫ ೪೩೨೧೦',
-        email: 'contact@benkitv.com',
+        phone: '+91 9916776322',
+        email: 'benkitvtnarsipura@gmail.com',
         noNews: 'ಇನ್ನೂ ಯಾವುದೇ ಸುದ್ದಿಗಳಿಲ್ಲ',
     }
 };

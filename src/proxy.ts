@@ -2,11 +2,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     // Check if the path starts with /admin
     if (request.nextUrl.pathname.startsWith('/admin')) {
 
-        // Allow access to the login page (and server actions/api if needed, but simple path check works here)
+        // Allow access to the login page
         if (request.nextUrl.pathname === '/admin/login') {
             return NextResponse.next();
         }
