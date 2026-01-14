@@ -38,7 +38,10 @@ export default function ArticleContent({ article, recommended }: { article: any,
                     <span className={styles.category}>{article.category}</span>
                     <h1 className={styles.title}>{t(article.title_en, article.title_kn)}</h1>
                     <div className={styles.meta}>
-                        <span>Published: {new Date(article.published_at).toLocaleString()}</span>
+                        <span>Published: {(() => {
+                            const d = new Date(article.published_at);
+                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                        })()}</span>
                         <button onClick={handleShare} className={styles.share} title="Share Article">
                             {copied ? <Check size={16} /> : <Share2 size={16} />}
                             {copied ? 'Copied!' : 'Share'}

@@ -33,7 +33,10 @@ export default function NewsCard({ article, featured = false }: { article: any, 
                         {t(article.content_en, article.content_kn).substring(0, featured ? 150 : 80)}...
                     </p>
                     <div className={styles.meta}>
-                        {new Date(article.published_at).toLocaleDateString()}
+                        {(() => {
+                            const d = new Date(article.published_at);
+                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                        })()}
                     </div>
                 </div>
             </Link>

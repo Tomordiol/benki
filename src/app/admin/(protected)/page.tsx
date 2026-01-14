@@ -30,7 +30,10 @@ export default async function AdminDashboard() {
                             <td>{article.title_en} {article.is_breaking ? '🔥' : ''}</td>
                             <td>{article.title_kn}</td>
                             <td>{article.category}</td>
-                            <td>{new Date(article.published_at).toLocaleDateString()}</td>
+                            <td>{(() => {
+                                const d = new Date(article.published_at);
+                                return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                            })()}</td>
                             <td>
                                 <Link href={`/admin/edit/${article.id}`} className="edit-btn">Edit</Link>
                                 <form action={deleteArticle.bind(null, article.id)} style={{ display: 'inline' }}>
