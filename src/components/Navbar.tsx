@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Search, Lock } from 'lucide-react';
+import { Facebook, Instagram, Search, Lock, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { useLanguage } from '@/lib/LanguageContext';
 import { dictionary } from '@/lib/dictionary';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
     adBannerUrl?: string;
@@ -74,8 +76,19 @@ export default function Navbar({ adBannerUrl }: NavbarProps) {
                             </li>
                         ))}
                     </ul>
-                    <div className={styles.search}>
-                        <Search size={20} color="white" />
+                    <div className={styles.searchContainer}>
+                        <form action="/search" method="GET" className={styles.searchForm}>
+                            <input
+                                type="text"
+                                name="q"
+                                placeholder={t.search + "..."}
+                                className={styles.searchInput}
+                                required
+                            />
+                            <button type="submit" className={styles.searchButton}>
+                                <Search size={20} color="white" />
+                            </button>
+                        </form>
                     </div>
                 </div>
             </nav>

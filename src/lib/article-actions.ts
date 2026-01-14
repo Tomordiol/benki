@@ -12,6 +12,19 @@ export async function getArticles() {
     return stmt.all();
 }
 
+export async function searchArticles(query: string) {
+    const stmt = db.prepare(`
+        SELECT * FROM articles 
+        WHERE title_en LIKE ? 
+        OR title_kn LIKE ? 
+        OR content_en LIKE ? 
+        OR content_kn LIKE ? 
+        ORDER BY published_at DESC
+    `);
+    const searchTerm = `%${query}%`;
+    return stmt.all(searchTerm, searchTerm, searchTerm, searchTerm);
+}
+
 export async function getArticle(id: string) {
     const stmt = db.prepare('SELECT * FROM articles WHERE id = ?');
     return stmt.get(id);

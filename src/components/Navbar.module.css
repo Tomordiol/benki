@@ -99,7 +99,44 @@
     background: var(--primary);
 }
 
-.search {
-    padding: 1rem;
+.searchContainer {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.searchForm {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 2px 5px;
+}
+
+.searchInput {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    width: 150px;
+    outline: none;
+}
+
+.searchInput::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.searchButton {
+    background: transparent;
+    border: none;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.searchButton:hover {
+    color: var(--primary);
 }

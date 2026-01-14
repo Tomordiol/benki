@@ -9,6 +9,8 @@ import { getArticles, getSettings } from '@/lib/article-actions';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import LanguageToggle from '@/components/LanguageToggle'; // Need to create this
 
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
