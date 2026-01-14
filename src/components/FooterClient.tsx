@@ -27,7 +27,7 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
         <footer className={styles.footer}>
             <div className={`container ${styles.content}`}>
                 <div className={styles.column}>
-                    <h3>BENKI<span style={{ color: '#cc0000' }}>TV</span></h3>
+                    <h3>BENKI<span style={{ color: '#cc0000' }}>TV</span> <span style={{ fontSize: '0.8em' }}>T.Narasipura</span></h3>
                     <p>{lang === 'en' ? 'The fire of truth.' : 'ಸತ್ಯದ ಬೆಂಕಿ.'}</p>
                 </div>
 
@@ -58,7 +58,7 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
                 </div>
             </div>
             <div className={styles.copyright}>
-                &copy; {new Date().getFullYear()} BenkiTv. {t.rights}
+                &copy; {new Date().getFullYear()} BenkiTv T.Narasipura. {t.rights}
             </div>
         </footer>
     );

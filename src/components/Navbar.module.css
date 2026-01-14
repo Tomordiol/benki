@@ -44,6 +44,16 @@
     color: var(--primary);
 }
 
+.location {
+    font-size: 0.5em;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 1px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
 .adSpace {
     width: 100%;
     max-width: 200px;

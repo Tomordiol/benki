@@ -32,16 +32,6 @@ export default async function SettingsPage() {
                     />
                 </div>
 
-                <h2>Advertisement</h2>
-                <div className="form-group">
-                    <label>Header Banner (Recommended: 728x90px)</label>
-                    {settings.ad_banner_url && (
-                        <div style={{ marginBottom: '10px' }}>
-                            <img src={settings.ad_banner_url} alt="Current Ad" style={{ maxWidth: '100%', height: 'auto', border: '1px solid #ccc' }} />
-                        </div>
-                    )}
-                    <input type="file" name="ad_banner" accept="image/*" className="form-input" />
-                </div>
 
                 <button type="submit" className="submit-btn">Save Settings</button>
             </form>

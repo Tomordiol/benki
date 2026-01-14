@@ -15,7 +15,7 @@ export default function NewsCard({ article, featured = false }: { article: any, 
                     {article.media_url ? (
                         <img src={article.media_url} alt={article.title_en} className={styles.image} />
                     ) : (
-                        <div className={styles.placeholderBg}>BENKI TV</div>
+                        <div className={styles.placeholderBg}>BENKI TV T.Narasipura</div>
                     )}
                     <span className={styles.category}>{article.category}</span>
 

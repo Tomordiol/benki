@@ -41,25 +41,8 @@ export default function Navbar({ adBannerUrl }: NavbarProps) {
             {/* Main Header */}
             <div className={`container ${styles.mainHeader}`}>
                 <Link href="/" className={styles.logo}>
-                    BENKI<span className={styles.tv}>TV</span>
+                    BENKI<span className={styles.tv}>TV</span> <span className={styles.location}>T.Narasipura</span>
                 </Link>
-                <div className={styles.adSpace}>
-                    {/* 
-                      AD SPACE INSTRUCTIONS:
-                      1. To use an image: Keep the <Image> tag below. The src comes from Admin Settings.
-                      2. To use Google AdSense: Remove <Image> and paste your <script> code here.
-                    */}
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                        <Image
-                            src={adBannerUrl || "/ad-banner.png"}
-                            alt="Advertisement"
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            priority
-                            unoptimized // Important for uploaded images outside of next/image optimization loop sometimes
-                        />
-                    </div>
-                </div>
             </div>
 
             {/* Navigation */}
