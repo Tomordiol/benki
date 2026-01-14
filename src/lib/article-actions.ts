@@ -4,8 +4,7 @@ import db, { dbReady } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { writeFile } from 'fs/promises';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 export async function getArticles() {
     await dbReady;
@@ -92,20 +91,8 @@ export async function createArticle(formData: FormData) {
 
     const file = formData.get('media') as File;
     if (file && file.size > 0) {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        if (process.env.VERCEL === '1') {
-            console.warn('File upload skipped: local filesystem is read-only on Vercel.');
-        } else {
-            const fs = require('fs');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-
-            await writeFile(path.join(uploadDir, filename), buffer);
-            media_url = `/uploads/${filename}`;
-        }
+        const blob = await put(file.name, file, { access: 'public' });
+        media_url = blob.url;
     }
 
     await db.execute({
@@ -135,21 +122,8 @@ export async function updateArticle(formData: FormData) {
 
     const file = formData.get('media') as File;
     if (file && file.size > 0) {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-
-        if (process.env.VERCEL === '1') {
-            console.warn('File upload skipped: local filesystem is read-only on Vercel.');
-        } else {
-            const fs = require('fs');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-
-            await writeFile(path.join(uploadDir, filename), buffer);
-            media_url = `/uploads/${filename}`;
-        }
+        const blob = await put(file.name, file, { access: 'public' });
+        media_url = blob.url;
     }
 
     await db.execute({
@@ -183,24 +157,11 @@ export async function updateSettings(formData: FormData) {
     // Handle Ad Banner
     const file = formData.get('ad_banner') as File;
     if (file && file.size > 0) {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `ad-${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        if (process.env.VERCEL === '1') {
-            console.warn('Ad banner upload skipped: local filesystem is read-only on Vercel.');
-        } else {
-            const fs = require('fs');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-
-            await writeFile(path.join(uploadDir, filename), buffer);
-            const adUrl = `/uploads/${filename}`;
-            await db.execute({
-                sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-                args: ['ad_banner_url', adUrl]
-            });
-        }
+        const blob = await put(file.name, file, { access: 'public' });
+        await db.execute({
+            sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+            args: ['ad_banner_url', blob.url]
+        });
     }
 
     revalidatePath('/');
