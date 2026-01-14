@@ -32,6 +32,7 @@ export default async function AdminDashboard() {
                             <td>{article.category}</td>
                             <td>{new Date(article.published_at).toLocaleDateString()}</td>
                             <td>
+                                <Link href={`/admin/edit/${article.id}`} className="edit-btn">Edit</Link>
                                 <form action={deleteArticle.bind(null, article.id)} style={{ display: 'inline' }}>
                                     <button type="submit" className="action-btn">Delete</button>
                                 </form>

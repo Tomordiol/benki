@@ -103,7 +103,17 @@
     border: none;
     color: #cc0000;
     cursor: pointer;
-    margin-left: 1rem;
+}
+
+.edit-btn {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+}
+
+.edit-btn:hover {
+    text-decoration: underline;
 }
 
 /* Article Form Styles */

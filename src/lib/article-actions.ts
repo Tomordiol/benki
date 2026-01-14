@@ -121,6 +121,51 @@ export async function createArticle(formData: FormData) {
     redirect('/admin');
 }
 
+export async function updateArticle(formData: FormData) {
+    await dbReady;
+    const id = String(formData.get('id') || '');
+    const title_en = String(formData.get('title_en') || '');
+    const title_kn = String(formData.get('title_kn') || '');
+    const content_en = String(formData.get('content_en') || '');
+    const content_kn = String(formData.get('content_kn') || '');
+    const category = String(formData.get('category') || '');
+    const is_breaking = formData.get('is_breaking') === 'on' ? 1 : 0;
+
+    let media_url = String(formData.get('existing_media_url') || '');
+
+    const file = formData.get('media') as File;
+    if (file && file.size > 0) {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+
+        if (process.env.VERCEL === '1') {
+            console.warn('File upload skipped: local filesystem is read-only on Vercel.');
+        } else {
+            const fs = require('fs');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            await writeFile(path.join(uploadDir, filename), buffer);
+            media_url = `/uploads/${filename}`;
+        }
+    }
+
+    await db.execute({
+        sql: `
+            UPDATE articles 
+            SET title_en = ?, title_kn = ?, content_en = ?, content_kn = ?, category = ?, media_url = ?, is_breaking = ?
+            WHERE id = ?
+        `,
+        args: [title_en, title_kn, content_en, content_kn, category, media_url, is_breaking, id]
+    });
+
+    revalidatePath('/admin');
+    revalidatePath('/');
+    redirect('/admin');
+}
+
 export async function updateSettings(formData: FormData) {
     await dbReady;
     const fb = String(formData.get('facebook_followers') || '0');
