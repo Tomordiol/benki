@@ -14,8 +14,8 @@ export const dynamic = 'force-dynamic';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'BenkiTv T.Narasipura - The Fire of Truth',
-  description: 'Latest news in English and Kannada',
+  title: 'Benki TV T.Narasipura - The Fire of Truth',
+  description: 'Latest news from T.Narasipura in English and Kannada',
 };
 
 export default async function RootLayout({

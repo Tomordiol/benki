@@ -19,7 +19,7 @@ export default async function ProtectedAdminLayout({
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
-        <div className="admin-brand">BenkiTv Admin</div>
+        <div className="admin-brand">Benki TV Admin</div>
         <nav className="admin-nav">
           <Link href="/admin">Dashboard</Link>
           <Link href="/admin/create">New Article</Link>

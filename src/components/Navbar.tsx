@@ -44,7 +44,16 @@ export default function Navbar({ adBannerUrl }: NavbarProps) {
             {/* Main Header */}
             <div className={`container ${styles.mainHeader}`}>
                 <Link href="/" className={styles.logo}>
-                    BENKI<span className={styles.tv}>TV</span> <span className={styles.location}>T.Narasipura</span>
+                    <div className={styles.logoWrapper}>
+                        <Image
+                            src="/logo.jpg"
+                            alt={t.siteTitle}
+                            width={240}
+                            height={120}
+                            className={styles.logoImage}
+                            priority
+                        />
+                    </div>
                 </Link>
             </div>
 

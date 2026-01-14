@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     return (
         <div className={styles.container}>
             <div className={styles.card}>
-                <h1>BenkiTv Admin</h1>
+                <h1>Benki TV Admin</h1>
 
                 {error && (
                     <div style={{ background: '#fee', color: '#c00', padding: '0.75rem', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem' }}>

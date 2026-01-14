@@ -22,6 +22,7 @@ export const dictionary = {
         phone: '+91 9916776322',
         email: 'benkitvtnarsipura@gmail.com',
         noNews: 'No news yet',
+        siteTitle: 'Benki TV T.Narasipura',
     },
     kn: {
         home: 'ಮುಖಪುಟ',
@@ -43,5 +44,6 @@ export const dictionary = {
         phone: '+91 9916776322',
         email: 'benkitvtnarsipura@gmail.com',
         noNews: 'ಇನ್ನೂ ಯಾವುದೇ ಸುದ್ದಿಗಳಿಲ್ಲ',
+        siteTitle: 'ಬೆಂಕಿ ಟಿವಿ ಟಿ.ನರಸೀಪುರ',
     }
 };

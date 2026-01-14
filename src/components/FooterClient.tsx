@@ -4,6 +4,7 @@
 import styles from './Footer.module.css';
 import { useLanguage } from '@/lib/LanguageContext';
 import { dictionary } from '@/lib/dictionary';
+import Image from 'next/image';
 // We need to fetch settings differently if this is a client component, 
 // or pass them in as props. For now, since we made this 'use client' for translation,
 // we'll accept settings as a prop or fetch them via a Server Action wrapper if needed.
@@ -27,7 +28,15 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
         <footer className={styles.footer}>
             <div className={`container ${styles.content}`}>
                 <div className={styles.column}>
-                    <h3>BENKI<span style={{ color: '#cc0000' }}>TV</span> <span style={{ fontSize: '0.8em' }}>T.Narasipura</span></h3>
+                    <div className={styles.footerLogo}>
+                        <Image
+                            src="/logo.jpg"
+                            alt={t.siteTitle}
+                            width={150}
+                            height={50}
+                            className={styles.footerLogoImage}
+                        />
+                    </div>
                     <p>{lang === 'en' ? 'The fire of truth.' : 'ಸತ್ಯದ ಬೆಂಕಿ.'}</p>
                 </div>
 
@@ -58,7 +67,7 @@ export default function Footer({ facebookFollowers, instagramFollowers }: Footer
                 </div>
             </div>
             <div className={styles.copyright}>
-                &copy; {new Date().getFullYear()} BenkiTv T.Narasipura. {t.rights}
+                &copy; {new Date().getFullYear()} {t.siteTitle}. {t.rights}
             </div>
         </footer>
     );
