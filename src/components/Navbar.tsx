@@ -27,7 +27,10 @@ export default function Navbar({ adBannerUrl }: NavbarProps) {
             <div className={styles.topBar}>
                 <div className={`container ${styles.topBarContent}`}>
                     <div className={styles.date}>
-                        {new Date().toLocaleDateString(lang === 'kn' ? 'kn-IN' : 'en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {(() => {
+                            const d = new Date();
+                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                        })()}
                     </div>
                     <div className={styles.socials}>
                         {/* Socials removed as requested */}
