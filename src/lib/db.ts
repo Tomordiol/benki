@@ -3,7 +3,21 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const dbPath = path.join(process.cwd(), 'benki.db');
+const isVercel = process.env.VERCEL === '1';
+let dbPath = path.join(process.cwd(), 'benki.db');
+
+if (isVercel) {
+  const tmpPath = path.join('/tmp', 'benki.db');
+  // Copy the database to /tmp if it doesn't exist there
+  if (!fs.existsSync(tmpPath)) {
+    // Check if the source database exists in the project root
+    if (fs.existsSync(dbPath)) {
+      fs.copyFileSync(dbPath, tmpPath);
+    }
+  }
+  dbPath = tmpPath;
+}
+
 const db = new Database(dbPath);
 
 // Initialize Database Schema

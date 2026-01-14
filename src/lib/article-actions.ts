@@ -74,15 +74,20 @@ export async function createArticle(formData: FormData) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        if (process.env.VERCEL === '1') {
+            console.warn('File upload skipped: local filesystem is read-only on Vercel.');
+            // On Vercel, we can't save to the local filesystem permanently.
+            // For now, we'll just skip the upload to prevent crashing.
+        } else {
+            // Ensure dir exists
+            const fs = require('fs');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
 
-        // Ensure dir exists
-        const fs = require('fs');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+            await writeFile(path.join(uploadDir, filename), buffer);
+            media_url = `/uploads/${filename}`;
         }
-
-        await writeFile(path.join(uploadDir, filename), buffer);
-        media_url = `/uploads/${filename}`;
     }
 
     const stmt = db.prepare(`
@@ -111,16 +116,19 @@ export async function updateSettings(formData: FormData) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `ad-${Date.now()}-${file.name.replace(/\s/g, '_')}`;
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        if (process.env.VERCEL === '1') {
+            console.warn('Ad banner upload skipped: local filesystem is read-only on Vercel.');
+        } else {
+            // Ensure dir exists
+            const fs = require('fs');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
 
-        // Ensure dir exists
-        const fs = require('fs');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+            await writeFile(path.join(uploadDir, filename), buffer);
+            const adUrl = `/uploads/${filename}`;
+            stmt.run('ad_banner_url', adUrl);
         }
-
-        await writeFile(path.join(uploadDir, filename), buffer);
-        const adUrl = `/uploads/${filename}`;
-        stmt.run('ad_banner_url', adUrl);
     }
     // Note: We don't overwrite ad_banner_url if no file is selected, to preserve existing one.
 
