@@ -1,28 +1,18 @@
 
-import Database from 'better-sqlite3';
+import { createClient } from '@libsql/client';
 import path from 'path';
-import fs from 'fs';
 
-const isVercel = process.env.VERCEL === '1';
-let dbPath = path.join(process.cwd(), 'benki.db');
+const url = process.env.TURSO_DATABASE_URL || `file:${path.join(process.cwd(), 'benki.db')}`;
+const authToken = process.env.TURSO_AUTH_TOKEN;
 
-if (isVercel) {
-  const tmpPath = path.join('/tmp', 'benki.db');
-  // Copy the database to /tmp if it doesn't exist there
-  if (!fs.existsSync(tmpPath)) {
-    // Check if the source database exists in the project root
-    if (fs.existsSync(dbPath)) {
-      fs.copyFileSync(dbPath, tmpPath);
-    }
-  }
-  dbPath = tmpPath;
-}
-
-const db = new Database(dbPath);
+const db = createClient({
+  url: url,
+  authToken: authToken,
+});
 
 // Initialize Database Schema
-export function initDb() {
-  db.exec(`
+async function initDb() {
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS articles (
       id TEXT PRIMARY KEY,
       title_en TEXT NOT NULL,
@@ -37,16 +27,14 @@ export function initDb() {
     );
   `);
 
-  // Add followers table for admin settings if not exists
-  db.exec(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT
     );
   `);
 
-  // Admin users table with hashed password
-  db.exec(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS admin_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
@@ -57,8 +45,7 @@ export function initDb() {
     );
   `);
 
-  // Password reset tokens
-  db.exec(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -69,8 +56,7 @@ export function initDb() {
     );
   `);
 
-  // Login attempts for rate limiting
-  db.exec(`
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS login_attempts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ip_address TEXT,
@@ -81,27 +67,35 @@ export function initDb() {
   `);
 
   // Seed initial settings if empty
-  const stmt = db.prepare('SELECT count(*) as count FROM settings');
-  const result = stmt.get() as { count: number };
+  const result = await db.execute('SELECT count(*) as count FROM settings');
+  const count = Number(result.rows[0]?.count || 0);
 
-  if (result.count === 0) {
-    const insert = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
-    insert.run('facebook_followers', '0');
-    insert.run('instagram_followers', '0');
+  if (count === 0) {
+    await db.execute({
+      sql: 'INSERT INTO settings (key, value) VALUES (?, ?)',
+      args: ['facebook_followers', '0']
+    });
+    await db.execute({
+      sql: 'INSERT INTO settings (key, value) VALUES (?, ?)',
+      args: ['instagram_followers', '0']
+    });
   }
 
   // Create default admin if not exists
-  const adminCheck = db.prepare('SELECT count(*) as count FROM admin_users').get() as { count: number };
-  if (adminCheck.count === 0) {
-    // Using bcryptjs to hash the default password
+  const adminCheck = await db.execute('SELECT count(*) as count FROM admin_users');
+  const adminCount = Number(adminCheck.rows[0]?.count || 0);
+
+  if (adminCount === 0) {
     const bcrypt = require('bcryptjs');
     const defaultPasswordHash = bcrypt.hashSync('Benki@9977', 10);
-    const insertAdmin = db.prepare('INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)');
-    insertAdmin.run('benkimanju', defaultPasswordHash, 'benkitvtnarsipura@gmail.com');
+    await db.execute({
+      sql: 'INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)',
+      args: ['benkimanju', defaultPasswordHash, 'benkitvtnarsipura@gmail.com']
+    });
   }
 }
 
-// Auto-initialize on import
-initDb();
+// Export a promise that resolves when the DB is ready
+export const dbReady = initDb();
 
 export default db;

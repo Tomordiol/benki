@@ -3,7 +3,7 @@
 
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import db from '@/lib/db';
+import db, { dbReady } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 import crypto from 'crypto';
@@ -24,24 +24,32 @@ async function checkRateLimit(username: string): Promise<{ allowed: boolean; rem
     const ip = await getClientIP();
     const cutoff = new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000).toISOString();
 
-    const stmt = db.prepare(`
-        SELECT COUNT(*) as attempts FROM login_attempts 
-        WHERE (username = ? OR ip_address = ?) 
-        AND success = 0 
-        AND attempted_at > ?
-    `);
-    const result = stmt.get(username, ip, cutoff) as { attempts: number };
+    await dbReady;
+    const result = await db.execute({
+        sql: `
+            SELECT COUNT(*) as attempts FROM login_attempts 
+            WHERE (username = ? OR ip_address = ?) 
+            AND success = 0 
+            AND attempted_at > ?
+        `,
+        args: [username, ip, cutoff]
+    });
+
+    const attempts = Number(result.rows[0]?.attempts || 0);
 
     return {
-        allowed: result.attempts < MAX_ATTEMPTS,
-        remainingAttempts: Math.max(0, MAX_ATTEMPTS - result.attempts)
+        allowed: attempts < MAX_ATTEMPTS,
+        remainingAttempts: Math.max(0, MAX_ATTEMPTS - attempts)
     };
 }
 
 async function recordLoginAttempt(username: string, success: boolean) {
+    await dbReady;
     const ip = await getClientIP();
-    const stmt = db.prepare('INSERT INTO login_attempts (ip_address, username, success) VALUES (?, ?, ?)');
-    stmt.run(ip, username, success ? 1 : 0);
+    await db.execute({
+        sql: 'INSERT INTO login_attempts (ip_address, username, success) VALUES (?, ?, ?)',
+        args: [ip, username, success ? 1 : 0]
+    });
 }
 
 export async function login(formData: FormData) {
@@ -49,14 +57,18 @@ export async function login(formData: FormData) {
     const password = formData.get('password') as string;
 
     // Check rate limit
+    await dbReady;
     const rateLimit = await checkRateLimit(username);
     if (!rateLimit.allowed) {
         redirect(`/admin/login?error=Too many failed attempts. Try again in ${LOCKOUT_MINUTES} minutes.`);
     }
 
     // Get user from database
-    const stmt = db.prepare('SELECT * FROM admin_users WHERE username = ?');
-    const user = stmt.get(username) as { id: number; username: string; password_hash: string } | undefined;
+    const result = await db.execute({
+        sql: 'SELECT * FROM admin_users WHERE username = ?',
+        args: [username]
+    });
+    const user = result.rows[0] as unknown as { id: number; username: string; password_hash: string } | undefined;
 
     if (!user) {
         await recordLoginAttempt(username, false);
@@ -75,7 +87,10 @@ export async function login(formData: FormData) {
     await recordLoginAttempt(username, true);
 
     // Update last login
-    db.prepare('UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+    await db.execute({
+        sql: 'UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
+        args: [user.id]
+    });
 
     // Set session cookie with expiration (24 hours)
     const cookieStore = await cookies();
@@ -95,24 +110,32 @@ export async function logout() {
 }
 
 export async function checkAuth() {
+    await dbReady;
     const cookieStore = await cookies();
     const session = cookieStore.get('admin_session');
 
     if (!session) return false;
 
     // Verify user still exists
-    const stmt = db.prepare('SELECT id FROM admin_users WHERE id = ?');
-    const user = stmt.get(session.value);
+    const result = await db.execute({
+        sql: 'SELECT id FROM admin_users WHERE id = ?',
+        args: [session.value]
+    });
+    const user = result.rows[0];
 
     return !!user;
 }
 
 export async function requestPasswordReset(formData: FormData) {
+    await dbReady;
     const email = formData.get('email') as string;
 
     // Find user by email
-    const stmt = db.prepare('SELECT * FROM admin_users WHERE email = ?');
-    const user = stmt.get(email) as { id: number; username: string; email: string } | undefined;
+    const result = await db.execute({
+        sql: 'SELECT * FROM admin_users WHERE email = ?',
+        args: [email]
+    });
+    const user = result.rows[0] as unknown as { id: number; username: string; email: string } | undefined;
 
     if (!user) {
         // Don't reveal if email exists or not
@@ -124,8 +147,10 @@ export async function requestPasswordReset(formData: FormData) {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
     // Save token to database
-    const insertStmt = db.prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)');
-    insertStmt.run(user.id, token, expiresAt);
+    await db.execute({
+        sql: 'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+        args: [user.id, token, expiresAt]
+    });
 
     // Send email
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/reset-password?token=${token}`;
@@ -159,6 +184,7 @@ export async function requestPasswordReset(formData: FormData) {
 }
 
 export async function resetPassword(formData: FormData) {
+    await dbReady;
     const token = formData.get('token') as string;
     const newPassword = formData.get('password') as string;
 
@@ -171,11 +197,14 @@ export async function resetPassword(formData: FormData) {
     }
 
     // Find valid token
-    const stmt = db.prepare(`
-        SELECT * FROM password_reset_tokens 
-        WHERE token = ? AND used = 0 AND expires_at > datetime('now')
-    `);
-    const tokenRecord = stmt.get(token) as { id: number; user_id: number } | undefined;
+    const result = await db.execute({
+        sql: `
+            SELECT * FROM password_reset_tokens 
+            WHERE token = ? AND used = 0 AND expires_at > datetime('now')
+        `,
+        args: [token]
+    });
+    const tokenRecord = result.rows[0] as unknown as { id: number; user_id: number } | undefined;
 
     if (!tokenRecord) {
         redirect('/admin/login?error=Invalid or expired reset link');
@@ -185,15 +214,22 @@ export async function resetPassword(formData: FormData) {
     const passwordHash = bcrypt.hashSync(newPassword, 10);
 
     // Update user password
-    db.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?').run(passwordHash, tokenRecord.user_id);
+    await db.execute({
+        sql: 'UPDATE admin_users SET password_hash = ? WHERE id = ?',
+        args: [passwordHash, tokenRecord.user_id]
+    });
 
     // Mark token as used
-    db.prepare('UPDATE password_reset_tokens SET used = 1 WHERE id = ?').run(tokenRecord.id);
+    await db.execute({
+        sql: 'UPDATE password_reset_tokens SET used = 1 WHERE id = ?',
+        args: [tokenRecord.id]
+    });
 
     redirect('/admin/login?message=Password reset successful! Please login.');
 }
 
 export async function changePassword(formData: FormData) {
+    await dbReady;
     const cookieStore = await cookies();
     const session = cookieStore.get('admin_session');
 
@@ -209,8 +245,11 @@ export async function changePassword(formData: FormData) {
     }
 
     // Get current user
-    const stmt = db.prepare('SELECT * FROM admin_users WHERE id = ?');
-    const user = stmt.get(session.value) as { id: number; password_hash: string } | undefined;
+    const result = await db.execute({
+        sql: 'SELECT * FROM admin_users WHERE id = ?',
+        args: [session.value]
+    });
+    const user = result.rows[0] as unknown as { id: number; password_hash: string } | undefined;
 
     if (!user) {
         redirect('/admin/login');
@@ -223,7 +262,10 @@ export async function changePassword(formData: FormData) {
 
     // Update password
     const newHash = bcrypt.hashSync(newPassword, 10);
-    db.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?').run(newHash, user.id);
+    await db.execute({
+        sql: 'UPDATE admin_users SET password_hash = ? WHERE id = ?',
+        args: [newHash, user.id]
+    });
 
     return { success: true };
 }

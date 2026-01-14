@@ -1,6 +1,6 @@
 'use server'
 
-import db from '@/lib/db';
+import db, { dbReady } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,56 +8,63 @@ import { writeFile } from 'fs/promises';
 import path from 'path';
 
 export async function getArticles() {
-    const stmt = db.prepare('SELECT * FROM articles ORDER BY published_at DESC');
-    return stmt.all();
+    await dbReady;
+    const result = await db.execute('SELECT * FROM articles ORDER BY published_at DESC');
+    return result.rows;
 }
 
 export async function searchArticles(query: string) {
-    const stmt = db.prepare(`
-        SELECT * FROM articles 
-        WHERE title_en LIKE ? 
-        OR title_kn LIKE ? 
-        OR content_en LIKE ? 
-        OR content_kn LIKE ? 
-        ORDER BY published_at DESC
-    `);
+    await dbReady;
     const searchTerm = `%${query}%`;
-    return stmt.all(searchTerm, searchTerm, searchTerm, searchTerm);
+    const result = await db.execute({
+        sql: `
+            SELECT * FROM articles 
+            WHERE title_en LIKE ? 
+            OR title_kn LIKE ? 
+            OR content_en LIKE ? 
+            OR content_kn LIKE ? 
+            ORDER BY published_at DESC
+        `,
+        args: [searchTerm, searchTerm, searchTerm, searchTerm]
+    });
+    return result.rows;
 }
 
 export async function getArticle(id: string) {
-    const stmt = db.prepare('SELECT * FROM articles WHERE id = ?');
-    return stmt.get(id);
+    await dbReady;
+    const result = await db.execute({
+        sql: 'SELECT * FROM articles WHERE id = ?',
+        args: [id]
+    });
+    return result.rows[0];
 }
 
 export async function deleteArticle(id: string) {
-    const stmt = db.prepare('DELETE FROM articles WHERE id = ?');
-    stmt.run(id);
+    await dbReady;
+    await db.execute({
+        sql: 'DELETE FROM articles WHERE id = ?',
+        args: [id]
+    });
     revalidatePath('/admin');
     revalidatePath('/');
 }
 
 export async function getRecommendedArticles(currentId: string, category: string) {
+    await dbReady;
     // Try to find articles in same category
-    let stmt = db.prepare('SELECT * FROM articles WHERE category = ? AND id != ? ORDER BY published_at DESC LIMIT 3');
-    let articles = stmt.all(category, currentId);
+    const categoryResult = await db.execute({
+        sql: 'SELECT * FROM articles WHERE category = ? AND id != ? ORDER BY published_at DESC LIMIT 3',
+        args: [category, currentId]
+    });
+    let articles = [...categoryResult.rows];
 
     // If not enough, fill with other recent articles
     if (articles.length < 3) {
-        const limit = 3 - articles.length;
-        // Need to exclude currentId and already found articles
-        // For simplicity, just get recent articles excluding currentId that are NOT in the 'articles' list
-        const excludedIds = [currentId, ...articles.map((a: any) => a.id)].map(id => `'${id}'`).join(',');
-
-        // safe interpolation for IDs? uuid is safe.
-        // better-sqlite3 doesn't support array binding easily for IN clause usually unless standard hack.
-        // Let's just run a simple query: SELECT * FROM articles WHERE id != ? ORDER BY published_at DESC LIMIT ?
-        // And filter in JS if overlap (though unlikely if we query correctly).
-        // Actually, simpler: Just query recent articles, filter out current one, take top 3.
-        // That's easier than complex SQL for a small app.
-
-        stmt = db.prepare('SELECT * FROM articles WHERE id != ? ORDER BY published_at DESC LIMIT 10'); // Fetch a few more to filter
-        const recent = stmt.all(currentId) as any[];
+        const recentResult = await db.execute({
+            sql: 'SELECT * FROM articles WHERE id != ? ORDER BY published_at DESC LIMIT 10',
+            args: [currentId]
+        });
+        const recent = recentResult.rows;
 
         // Add ones that are not already in 'articles'
         for (const r of recent) {
@@ -72,12 +79,13 @@ export async function getRecommendedArticles(currentId: string, category: string
 }
 
 export async function createArticle(formData: FormData) {
+    await dbReady;
     const id = uuidv4();
-    const title_en = formData.get('title_en') as string;
-    const title_kn = formData.get('title_kn') as string;
-    const content_en = formData.get('content_en') as string;
-    const content_kn = formData.get('content_kn') as string;
-    const category = formData.get('category') as string;
+    const title_en = String(formData.get('title_en') || '');
+    const title_kn = String(formData.get('title_kn') || '');
+    const content_en = String(formData.get('content_en') || '');
+    const content_kn = String(formData.get('content_kn') || '');
+    const category = String(formData.get('category') || '');
     const is_breaking = formData.get('is_breaking') === 'on' ? 1 : 0;
 
     let media_url = '';
@@ -89,10 +97,7 @@ export async function createArticle(formData: FormData) {
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
         if (process.env.VERCEL === '1') {
             console.warn('File upload skipped: local filesystem is read-only on Vercel.');
-            // On Vercel, we can't save to the local filesystem permanently.
-            // For now, we'll just skip the upload to prevent crashing.
         } else {
-            // Ensure dir exists
             const fs = require('fs');
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
@@ -103,12 +108,13 @@ export async function createArticle(formData: FormData) {
         }
     }
 
-    const stmt = db.prepare(`
-    INSERT INTO articles (id, title_en, title_kn, content_en, content_kn, category, media_url, is_breaking)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-    stmt.run(id, title_en, title_kn, content_en, content_kn, category, media_url, is_breaking);
+    await db.execute({
+        sql: `
+            INSERT INTO articles (id, title_en, title_kn, content_en, content_kn, category, media_url, is_breaking)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [id, title_en, title_kn, content_en, content_kn, category, media_url, is_breaking]
+    });
 
     revalidatePath('/admin');
     revalidatePath('/');
@@ -116,12 +122,18 @@ export async function createArticle(formData: FormData) {
 }
 
 export async function updateSettings(formData: FormData) {
-    const fb = formData.get('facebook_followers');
-    const insta = formData.get('instagram_followers');
+    await dbReady;
+    const fb = String(formData.get('facebook_followers') || '0');
+    const insta = String(formData.get('instagram_followers') || '0');
 
-    const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-    stmt.run('facebook_followers', fb);
-    stmt.run('instagram_followers', insta);
+    await db.execute({
+        sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        args: ['facebook_followers', fb]
+    });
+    await db.execute({
+        sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        args: ['instagram_followers', insta]
+    });
 
     // Handle Ad Banner
     const file = formData.get('ad_banner') as File;
@@ -132,7 +144,6 @@ export async function updateSettings(formData: FormData) {
         if (process.env.VERCEL === '1') {
             console.warn('Ad banner upload skipped: local filesystem is read-only on Vercel.');
         } else {
-            // Ensure dir exists
             const fs = require('fs');
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
@@ -140,17 +151,20 @@ export async function updateSettings(formData: FormData) {
 
             await writeFile(path.join(uploadDir, filename), buffer);
             const adUrl = `/uploads/${filename}`;
-            stmt.run('ad_banner_url', adUrl);
+            await db.execute({
+                sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+                args: ['ad_banner_url', adUrl]
+            });
         }
     }
-    // Note: We don't overwrite ad_banner_url if no file is selected, to preserve existing one.
 
     revalidatePath('/');
 }
 
 export async function getSettings() {
-    const stmt = db.prepare('SELECT key, value FROM settings');
-    const rows = stmt.all() as { key: string, value: string }[];
+    await dbReady;
+    const result = await db.execute('SELECT key, value FROM settings');
+    const rows = result.rows as unknown as { key: string, value: string }[];
 
     const settings: Record<string, string> = {};
     rows.forEach(row => settings[row.key] = row.value);
