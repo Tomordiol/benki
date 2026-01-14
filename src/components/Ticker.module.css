@@ -1,0 +1,50 @@
+.tickerContainer {
+    background: #111;
+    color: white;
+    display: flex;
+    height: 40px;
+    overflow: hidden;
+    border-bottom: 2px solid var(--primary);
+}
+
+.label {
+    background: var(--primary);
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+    z-index: 10;
+}
+
+.scroller {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.track {
+    display: flex;
+    white-space: nowrap;
+    animation: scroll 20s linear infinite;
+}
+
+.item {
+    margin-right: 2rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}

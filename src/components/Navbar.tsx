@@ -1,0 +1,84 @@
+'use client';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { Facebook, Instagram, Search, Lock } from 'lucide-react';
+import styles from './Navbar.module.css';
+import { useLanguage } from '@/lib/LanguageContext';
+import { dictionary } from '@/lib/dictionary';
+
+interface NavbarProps {
+    adBannerUrl?: string;
+}
+
+export default function Navbar({ adBannerUrl }: NavbarProps) {
+    const { lang } = useLanguage();
+    const t = dictionary[lang];
+
+    // keys must match dictionary keys for categories roughly, or map them manually
+    // For simplicity, we stick to English keys for URL, but translate Display text
+    const categories = ['Politics', 'Cinema', 'Sports', 'Crime', 'Technology'];
+
+    return (
+        <header>
+            {/* Top Bar */}
+            <div className={styles.topBar}>
+                <div className={`container ${styles.topBarContent}`}>
+                    <div className={styles.date}>
+                        {new Date().toLocaleDateString(lang === 'kn' ? 'kn-IN' : 'en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                    <div className={styles.socials}>
+                        {/* Socials removed as requested */}
+                        <Link href="/admin/login" className={styles.socialIcon} title={t.adminLogin}>
+                            <Lock size={16} />
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Header */}
+            <div className={`container ${styles.mainHeader}`}>
+                <Link href="/" className={styles.logo}>
+                    BENKI<span className={styles.tv}>TV</span>
+                </Link>
+                <div className={styles.adSpace}>
+                    {/* 
+                      AD SPACE INSTRUCTIONS:
+                      1. To use an image: Keep the <Image> tag below. The src comes from Admin Settings.
+                      2. To use Google AdSense: Remove <Image> and paste your <script> code here.
+                    */}
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <Image
+                            src={adBannerUrl || "/ad-banner.png"}
+                            alt="Advertisement"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                            priority
+                            unoptimized // Important for uploaded images outside of next/image optimization loop sometimes
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className={styles.nav}>
+                <div className={`container ${styles.navContent}`}>
+                    <ul className={styles.navList}>
+                        <li><Link href="/">{t.home}</Link></li>
+                        {categories.map(cat => (
+                            <li key={cat}>
+                                <Link href={`/category/${cat.toLowerCase()}`}>
+                                    {/* @ts-ignore - dynamic key access */}
+                                    {dictionary[lang][cat.toLowerCase()] || cat}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className={styles.search}>
+                        <Search size={20} color="white" />
+                    </div>
+                </div>
+            </nav>
+        </header >
+    );
+}
